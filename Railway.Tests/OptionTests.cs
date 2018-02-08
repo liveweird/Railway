@@ -4,9 +4,9 @@ namespace Railway.Tests
 {
     public class OptionTests
     {
-        internal class Something
+        internal class SampleEntity
         {
-            public Something(bool logic)
+            public SampleEntity(bool logic)
             {
                 Logic = logic;
             }
@@ -15,34 +15,51 @@ namespace Railway.Tests
         }
 
         [Fact]
-        public void ApplyNoneOnNone()
+        public void MapNone()
         {
-            IOption<Something> none = Option<Something>.None;
-            Assert.IsType<None<Something>>(none.Apply(a => Option<Something>.None));
+            Option<SampleEntity> none = Option.None;
+            Assert.IsType<None<int>>(none.Map(a => 1));
         }
 
         [Fact]
-        public void ApplySomeOnNone()
+        public void MapSome()
         {
-            IOption<Something> none = Option<Something>.None;
-            Assert.IsType<None<Something>>(none.Apply(a => Option<Something>.Some(new Something(true))));
+            Option<SampleEntity> some = new SampleEntity(true);
+            var mapped = some.Map(a => 1);
+            Assert.IsType<Some<int>>(mapped);
+            Assert.True(mapped is Some<int> converted && converted.Value == 1);
         }
 
         [Fact]
-        public void ApplyNoneOnSome()
+        public void WhenNegative()
         {
-            IOption<Something> none = Option<Something>.Some(new Something(true));
-            Assert.IsType<None<Something>>(none.Apply(a => Option<Something>.None));
+            var entity = new SampleEntity(false);
+            var filtered = entity.When(subj => subj.Logic);
+            Assert.IsType<None<SampleEntity>>(filtered);
         }
 
         [Fact]
-        public void ApplySomeOnSome()
+        public void WhenPositive()
         {
-            IOption<Something> none = Option<Something>.Some(new Something(true));
-            var applied = none.Apply(a => Option<Something>.Some(new Something(!(a.Logic))));
-            Assert.IsType<Some<Something>>(applied);
-            Assert.False(applied is Some<Something> converted && converted.Value.Logic);
+            var entity = new SampleEntity(true);
+            var filtered = entity.When(subj => subj.Logic);
+            Assert.IsType<Some<SampleEntity>>(filtered);
         }
 
+        [Fact]
+        public void ReduceNone()
+        {
+            Option<SampleEntity> none = Option.None;
+            var reduced = none.Reduce(new SampleEntity(true));
+            Assert.True(reduced.Logic);
+        }
+
+        [Fact]
+        public void ReduceSome()
+        {
+            Option<SampleEntity> none = new SampleEntity(false);
+            var reduced = none.Reduce(new SampleEntity(true));
+            Assert.False(reduced.Logic);
+        }
     }
 }

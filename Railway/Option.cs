@@ -40,7 +40,7 @@ namespace Railway
         }
     }
 
-    public class Option
+    public abstract class Option
     {
         public static None None = new None();
     }

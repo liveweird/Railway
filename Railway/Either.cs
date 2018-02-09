@@ -2,30 +2,30 @@
 
 namespace Railway
 {
-    public static class EitherExtensions
+    public static class TryExtensions
     {
-        public static Either<TLeft2, TRight> Map<TLeft, TLeft2, TRight>(this Either<TLeft, TRight> either,
-            Func<TLeft, TLeft2> mapper)
+        public static Try<TSuccess2, TError> Map<TSuccess, TSuccess2, TError>(this Try<TSuccess, TError> @try,
+            Func<TSuccess, TSuccess2> mapper)
         {
-            switch (either)
+            switch (@try)
             {
-                case Left<TLeft, TRight> left:
-                    return mapper(left);
-                case Right<TLeft, TRight> right:
-                    return (TRight)right;
+                case Success<TSuccess, TError> success:
+                    return mapper(success);
+                case Error<TSuccess, TError> error:
+                    return (TError)error;
                 default:
                     throw new InvalidOperationException();
             }
         }
 
-        public static TLeft Reduce<TLeft, TRight>(this Either<TLeft, TRight> either,
-            TLeft defaultValue)
+        public static TSuccess Reduce<TSuccess, TError>(this Try<TSuccess, TError> @try,
+            TSuccess defaultValue)
         {
-            switch (either)
+            switch (@try)
             {
-                case Left<TLeft, TRight> left:
-                    return left;
-                case Right<TLeft, TRight> _:
+                case Success<TSuccess, TError> success:
+                    return success;
+                case Error<TSuccess, TError> _:
                     return defaultValue;
                 default:
                     throw new InvalidOperationException();
@@ -33,36 +33,36 @@ namespace Railway
         }
     }
 
-    public abstract class Either<TLeft, TRight>
+    public abstract class Try<TSuccess, TError>
     {
-        public static implicit operator Either<TLeft, TRight>(TLeft left) =>
-            new Left<TLeft, TRight>(left);
+        public static implicit operator Try<TSuccess, TError>(TSuccess success) =>
+            new Success<TSuccess, TError>(success);
 
-        public static implicit operator Either<TLeft, TRight>(TRight right) =>
-            new Right<TLeft, TRight>(right);
+        public static implicit operator Try<TSuccess, TError>(TError error) =>
+            new Error<TSuccess, TError>(error);
     }
 
-    public class Left<TLeft, TRight> : Either<TLeft, TRight>
+    public class Success<TSuccess, TError> : Try<TSuccess, TError>
     {
-        private TLeft Content { get; }
+        public TSuccess Content { get; }
 
-        public Left(TLeft content)
+        internal Success(TSuccess content)
         {
             Content = content;
         }
 
-        public static implicit operator TLeft(Left<TLeft, TRight> left) => left.Content;
+        public static implicit operator TSuccess(Success<TSuccess, TError> success) => success.Content;
     }
 
-    public class Right<TLeft, TRight> : Either<TLeft, TRight>
+    public class Error<TSuccess, TError> : Try<TSuccess, TError>
     {
-        private TRight Content { get; }
+        public TError Content { get; }
 
-        public Right(TRight content)
+        internal Error(TError content)
         {
             Content = content;
         }
 
-        public static implicit operator TRight(Right<TLeft, TRight> right) => right.Content;
+        public static implicit operator TError(Error<TSuccess, TError> error) => error.Content;
     }
 }

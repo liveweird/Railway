@@ -16,7 +16,7 @@ namespace Railway.Tests
         }
     }
 
-    public class EitherTests
+    public class TryTests
     {
         [Fact]
         public void OperationSucceeds()

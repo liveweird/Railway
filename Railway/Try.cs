@@ -33,6 +33,21 @@ namespace Railway
         }
     }
 
+    public static class Try
+    {
+        public static Try<TSuccess, Exception> Exec<TSuccess>(Func<TSuccess> called)
+        {
+            try
+            {
+                return called.Invoke();
+            }
+            catch (Exception ex)
+            {
+                return ex;
+            }
+        }
+    }
+
     public abstract class Try<TSuccess, TError>
     {
         public static implicit operator Try<TSuccess, TError>(TSuccess success) =>

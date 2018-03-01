@@ -26,8 +26,68 @@ namespace Railway.Tests
         }
     }
 
+    internal class OuterService
+    {
+        internal Try<InnerService, Exception> GetInner1()
+        {
+            return new InnerService();
+        }
+
+        internal Try<InnerService, Exception> GetInner2()
+        {
+            return new Exception("No way, Jose.");
+        }
+
+        internal Try<InnerService, Exception> GetInner3()
+        {
+            throw new Exception("No way, Jose.");
+        }
+    }
+
+    internal class InnerService
+    {
+        internal bool GetBool1(bool value)
+        {
+            return value;
+        }
+
+        internal Try<bool, Exception> GetBool2(bool value)
+        {
+            return value;
+        }
+    }
+
     public class TryTests
     {
+        [Fact]
+        public void OuterFailsInnerNothing()
+        {
+            // map
+            var result1 = new OuterService()
+                .GetInner2()
+                .Map(inner => inner.GetBool1(true));
+
+            Assert.IsType<Error<bool, Exception>>(result1);
+            Assert.True(result1 is Error<bool, Exception> converted1 && converted1.Content.Message == "No way, Jose.");
+
+            // flatmap
+            var result2 = new OuterService()
+                .GetInner2()
+                .FlatMap(inner => inner.GetBool2(true));
+
+            Assert.IsType<Error<bool, Exception>>(result2);
+            Assert.True(result2 is Error<bool, Exception> converted2 && converted2.Content.Message == "No way, Jose.");
+
+        }
+
+        [Fact]
+        public void OuterSucceedsInnerFails()
+        {}
+
+        [Fact]
+        public void OuterSucceedsInnerSucceeds()
+        {}
+
         [Fact]
         public void OperationSucceeds()
         {

@@ -18,6 +18,20 @@ namespace Railway
             }
         }
 
+        public static Try<TSuccess2, TError> FlatMap<TSuccess, TSuccess2, TError>(this Try<TSuccess, TError> @try,
+            Func<TSuccess, Try<TSuccess2, TError>> mapper)
+        {
+            switch (@try)
+            {
+                case Success<TSuccess, TError> success:
+                    return mapper(success);
+                case Error<TSuccess, TError> error:
+                    return (TError)error;
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
+
         public static TSuccess Reduce<TSuccess, TError>(this Try<TSuccess, TError> @try,
             TSuccess defaultValue)
         {

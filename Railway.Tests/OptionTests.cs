@@ -4,7 +4,20 @@ namespace Railway.Tests
 {
     public class OptionTests
     {
-        internal class SampleEntity
+        private static class SampleService
+        {
+            internal static Option<SampleEntity> Op1(bool value)
+            {
+                return new SampleEntity(value);
+            }
+
+            internal static Option<SampleEntity> Op2()
+            {
+                return Option.None;
+            }
+        }
+
+        private class SampleEntity
         {
             public SampleEntity(bool logic)
             {
@@ -17,17 +30,18 @@ namespace Railway.Tests
         [Fact]
         public void MapNone()
         {
-            Option<SampleEntity> none = Option.None;
-            Assert.IsType<None<int>>(none.Map(a => 1));
+            var result = SampleService.Op2();
+            var mapped = result.Map(a => a.Logic);
+            Assert.IsType<None<bool>>(mapped);
         }
 
         [Fact]
         public void MapSome()
         {
-            Option<SampleEntity> some = new SampleEntity(true);
-            var mapped = some.Map(a => 1);
-            Assert.IsType<Some<int>>(mapped);
-            Assert.True(mapped is Some<int> converted && converted.Value == 1);
+            var result = SampleService.Op1(true);
+            var mapped = result.Map(a => a.Logic);
+            Assert.IsType<Some<bool>>(mapped);
+            Assert.True(mapped is Some<bool> converted && converted.Value);
         }
 
         [Fact]
@@ -49,7 +63,7 @@ namespace Railway.Tests
         [Fact]
         public void ReduceNone()
         {
-            Option<SampleEntity> none = Option.None;
+            var none = SampleService.Op2();
             var reduced = none.Reduce(new SampleEntity(true));
             Assert.True(reduced.Logic);
         }
@@ -57,8 +71,8 @@ namespace Railway.Tests
         [Fact]
         public void ReduceSome()
         {
-            Option<SampleEntity> none = new SampleEntity(false);
-            var reduced = none.Reduce(new SampleEntity(true));
+            var some = SampleService.Op1(false);
+            var reduced = some.Reduce(new SampleEntity(true));
             Assert.False(reduced.Logic);
         }
     }

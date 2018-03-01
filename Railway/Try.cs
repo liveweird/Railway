@@ -4,6 +4,23 @@ namespace Railway
 {
     public static class TryExtensions
     {
+        public static Try<TSuccess, TError> Try<TSuccess, TError>(Func<TSuccess> called) where TError : Exception
+        {
+            try
+            {
+                return called.Invoke();
+            }
+            catch (Exception ex)
+            {
+                return new Error<TSuccess, TError>(ex);
+            }
+        }
+
+        public static Try<TSuccess, TError> Try<TSuccess, TError>(this TSuccess obj)
+        {
+            return Try<TSuccess, TError>(obj);
+        }        
+
         public static Try<TSuccess2, TError> Map<TSuccess, TSuccess2, TError>(this Try<TSuccess, TError> @try,
             Func<TSuccess, TSuccess2> mapper)
         {
@@ -43,21 +60,6 @@ namespace Railway
                     return defaultValue;
                 default:
                     throw new InvalidOperationException();
-            }
-        }
-    }
-
-    public static class Try
-    {
-        public static Try<TSuccess, Exception> Exec<TSuccess>(Func<TSuccess> called)
-        {
-            try
-            {
-                return called.Invoke();
-            }
-            catch (Exception ex)
-            {
-                return ex;
             }
         }
     }

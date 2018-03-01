@@ -5,22 +5,27 @@ namespace Railway.Tests
 {
     internal static class SampleService
     {
-        internal static Try<string, Exception> Op1(bool param)
+        internal static Try<string, Exception> OpSuccessWrapped(bool param)
         {
             return param.ToString();
         }
 
-        internal static Try<string, Exception> Op2(bool param)
+        internal static Try<string, Exception> OpReturnExWrapped()
         {
             return new Exception("No way, Jose.");
         }
 
-        internal static string Op3(bool param)
+        internal static Try<string, Exception> OpThrowExWrapped()
+        {
+            throw new Exception("No way, Jose.");
+        }
+
+        internal static string OpSuccess(bool param)
         {
             return param.ToString();
         }
 
-        internal static string Op4(bool param)
+        internal static string OpThrowEx()
         {
             throw new Exception("No way, Jose.");
         }
@@ -28,17 +33,27 @@ namespace Railway.Tests
 
     internal class OuterService
     {
-        internal Try<InnerService, Exception> GetInner1()
+        internal Try<InnerService, Exception> GetInnerSuccessWrapped()
         {
             return new InnerService();
         }
 
-        internal Try<InnerService, Exception> GetInner2()
+        internal Try<InnerService, Exception> GetInnerReturnExWrapped()
         {
             return new Exception("No way, Jose.");
         }
 
-        internal Try<InnerService, Exception> GetInner3()
+        internal Try<InnerService, Exception> GetInnerThrowExWrapped()
+        {
+            throw new Exception("No way, Jose.");
+        }
+
+        internal InnerService GetInnerSuccess()
+        {
+            return new InnerService();
+        }
+
+        internal InnerService GetInnerThrowEx()
         {
             throw new Exception("No way, Jose.");
         }
@@ -46,15 +61,30 @@ namespace Railway.Tests
 
     internal class InnerService
     {
-        internal bool GetBool1(bool value)
+        internal Try<bool, Exception> GetBoolSuccessWrapped(bool value)
         {
             return value;
         }
 
-        internal Try<bool, Exception> GetBool2(bool value)
+        internal Try<bool, Exception> GetBoolReturnExWrapped()
+        {
+            return new Exception("No way, Jose.");
+        }
+
+        internal Try<bool, Exception> GetBoolThrowExWrapped()
+        {
+            throw new Exception("No way, Jose.");
+        }        
+
+        internal bool GetBoolSuccess(bool value)
         {
             return value;
         }
+
+        internal bool GetBoolThrowEx()
+        {
+            throw new Exception("No way, Jose.");
+        }                
     }
 
     public class TryTests
@@ -62,22 +92,28 @@ namespace Railway.Tests
         [Fact]
         public void OuterFailsInnerNothing()
         {
-            // map
+            // map (when inner test doesn't support Try)
             var result1 = new OuterService()
-                .GetInner2()
-                .Map(inner => inner.GetBool1(true));
+                .Try(srv => srv.GetInnerReturnExWrapped())
+                .Map(inner => inner.GetBoolSuccess(true));
 
             Assert.IsType<Error<bool, Exception>>(result1);
             Assert.True(result1 is Error<bool, Exception> converted1 && converted1.Content.Message == "No way, Jose.");
 
-            // flatmap
             var result2 = new OuterService()
-                .GetInner2()
-                .FlatMap(inner => inner.GetBool2(true));
+                .GetInnerThrowExWrapped()
+                .Map(inner => inner.GetBoolSuccess(true));
 
             Assert.IsType<Error<bool, Exception>>(result2);
             Assert.True(result2 is Error<bool, Exception> converted2 && converted2.Content.Message == "No way, Jose.");
 
+            // flatmap (when both support Try & use the same Exception wrapper class)
+            var result3 = new OuterService()
+                .GetInnerReturnExWrapped()
+                .FlatMap(inner => inner.GetBoolSuccessWrapped(true));
+
+            Assert.IsType<Error<bool, Exception>>(result3);
+            Assert.True(result3 is Error<bool, Exception>  converted3 && converted3.Content.Message == "No way, Jose.");
         }
 
         [Fact]
@@ -91,7 +127,7 @@ namespace Railway.Tests
         [Fact]
         public void OperationSucceeds()
         {
-            var result = SampleService.Op1(true);
+            var result = SampleService.OpSuccessWrapped(true);
             Assert.IsType<Success<string, Exception>>(result);
             Assert.True(result is Success<string, Exception> converted && converted.Content == true.ToString());
         }
@@ -99,7 +135,7 @@ namespace Railway.Tests
         [Fact]
         public void OperationFails()
         {
-            var result = SampleService.Op2(true);
+            var result = SampleService.OpThrowExWrapped();
             Assert.IsType<Error<string, Exception>>(result);
             Assert.True(result is Error<string, Exception> converted && converted.Content.Message == "No way, Jose.");
         }
@@ -107,7 +143,7 @@ namespace Railway.Tests
         [Fact]
         public void WrappedOperationSucceeds()
         {
-            var result = Try.Exec(() => SampleService.Op3(true));
+            var result = Try.Exec(() => SampleService.OpSuccess(true));
             Assert.IsType<Success<string, Exception>>(result);
             Assert.True(result is Success<string, Exception> converted && converted.Content == true.ToString());
         }
@@ -115,7 +151,7 @@ namespace Railway.Tests
         [Fact]
         public void WrappedOperationFails()
         {
-            var result = Try.Exec(() => SampleService.Op4(true));
+            var result = Try.Exec(() => SampleService.OpThrowEx());
             Assert.IsType<Error<string, Exception>>(result);
             Assert.True(result is Error<string, Exception> converted && converted.Content.Message == "No way, Jose.");
         }

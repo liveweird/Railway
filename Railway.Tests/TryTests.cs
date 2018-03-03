@@ -15,11 +15,6 @@ namespace Railway.Tests
             return new Exception("No way, Jose.");
         }
 
-        internal static Try<string, Exception> OpThrowExWrapped()
-        {
-            throw new Exception("No way, Jose.");
-        }
-
         internal static string OpSuccess(bool param)
         {
             return param.ToString();
@@ -41,11 +36,6 @@ namespace Railway.Tests
         internal Try<InnerService, Exception> GetInnerReturnExWrapped()
         {
             return new Exception("No way, Jose.");
-        }
-
-        internal Try<InnerService, Exception> GetInnerThrowExWrapped()
-        {
-            throw new Exception("No way, Jose.");
         }
 
         internal InnerService GetInnerSuccess()
@@ -71,11 +61,6 @@ namespace Railway.Tests
             return new Exception("No way, Jose.");
         }
 
-        internal Try<bool, Exception> GetBoolThrowExWrapped()
-        {
-            throw new Exception("No way, Jose.");
-        }        
-
         internal bool GetBoolSuccess(bool value)
         {
             return value;
@@ -93,27 +78,20 @@ namespace Railway.Tests
         public void OuterFailsInnerNothing()
         {
             // map (when inner test doesn't support Try)
-            var result1 = new OuterService()
-                .Try(srv => srv.GetInnerReturnExWrapped())
+            var outerCall = new Func<InnerService>(() => new OuterService().GetInnerSuccess());
+            var result1 = outerCall.Try<InnerService, Exception>()
                 .Map(inner => inner.GetBoolSuccess(true));
 
             Assert.IsType<Error<bool, Exception>>(result1);
             Assert.True(result1 is Error<bool, Exception> converted1 && converted1.Content.Message == "No way, Jose.");
 
-            var result2 = new OuterService()
-                .GetInnerThrowExWrapped()
-                .Map(inner => inner.GetBoolSuccess(true));
-
-            Assert.IsType<Error<bool, Exception>>(result2);
-            Assert.True(result2 is Error<bool, Exception> converted2 && converted2.Content.Message == "No way, Jose.");
-
             // flatmap (when both support Try & use the same Exception wrapper class)
-            var result3 = new OuterService()
+            var result2 = new OuterService()
                 .GetInnerReturnExWrapped()
                 .FlatMap(inner => inner.GetBoolSuccessWrapped(true));
 
-            Assert.IsType<Error<bool, Exception>>(result3);
-            Assert.True(result3 is Error<bool, Exception>  converted3 && converted3.Content.Message == "No way, Jose.");
+            Assert.IsType<Error<bool, Exception>>(result2);
+            Assert.True(result2 is Error<bool, Exception>  converted2 && converted2.Content.Message == "No way, Jose.");
         }
 
         [Fact]

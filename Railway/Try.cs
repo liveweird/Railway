@@ -4,25 +4,20 @@ namespace Railway
 {
     public static class TryExtensions
     {
-        public static Try<TSuccess, TError> Try<TSuccess, TError>(Func<TSuccess> called) where TError : Exception
+        public static Try<TSuccess, TError> Try<TSuccess, TError>(this Func<TSuccess> called) where TError : Exception
         {
             try
             {
                 return called.Invoke();
             }
-            catch (Exception ex)
+            catch (TError ex)
             {
                 return new Error<TSuccess, TError>(ex);
             }
         }
 
-        public static Try<TSuccess, TError> Try<TSuccess, TError>(this TSuccess obj)
-        {
-            return Try<TSuccess, TError>(obj);
-        }        
-
         public static Try<TSuccess2, TError> Map<TSuccess, TSuccess2, TError>(this Try<TSuccess, TError> @try,
-            Func<TSuccess, TSuccess2> mapper)
+            Func<TSuccess, TSuccess2> mapper) where TError : Exception
         {
             switch (@try)
             {
@@ -36,7 +31,7 @@ namespace Railway
         }
 
         public static Try<TSuccess2, TError> FlatMap<TSuccess, TSuccess2, TError>(this Try<TSuccess, TError> @try,
-            Func<TSuccess, Try<TSuccess2, TError>> mapper)
+            Func<TSuccess, Try<TSuccess2, TError>> mapper) where TError : Exception
         {
             switch (@try)
             {
@@ -50,7 +45,7 @@ namespace Railway
         }
 
         public static TSuccess Reduce<TSuccess, TError>(this Try<TSuccess, TError> @try,
-            TSuccess defaultValue)
+            TSuccess defaultValue) where TError : Exception
         {
             switch (@try)
             {
@@ -64,7 +59,7 @@ namespace Railway
         }
     }
 
-    public abstract class Try<TSuccess, TError>
+    public abstract class Try<TSuccess, TError> where TError : Exception
     {
         public static implicit operator Try<TSuccess, TError>(TSuccess success) =>
             new Success<TSuccess, TError>(success);
@@ -73,7 +68,7 @@ namespace Railway
             new Error<TSuccess, TError>(error);
     }
 
-    public class Success<TSuccess, TError> : Try<TSuccess, TError>
+    public class Success<TSuccess, TError> : Try<TSuccess, TError> where TError : Exception
     {
         public TSuccess Content { get; }
 
@@ -85,7 +80,7 @@ namespace Railway
         public static implicit operator TSuccess(Success<TSuccess, TError> success) => success.Content;
     }
 
-    public class Error<TSuccess, TError> : Try<TSuccess, TError>
+    public class Error<TSuccess, TError> : Try<TSuccess, TError> where TError : Exception
     {
         public TError Content { get; }
 
